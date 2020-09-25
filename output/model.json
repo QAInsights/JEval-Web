@@ -1,0 +1,15 @@
+{
+    "results":
+    [
+            {
+                "outcome" : "Pass",
+                "outcome_message" : "Valid JMeter Test Plan",
+                "recommendation" : "None"
+            },
+            {
+                "outcome" : "Fail",
+                "outcome_message" : "No Cookie Manager is enabled",
+                "recommendation" : "Consider adding Cookie Manager"
+            }
+    ]
+}
