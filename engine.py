@@ -27,7 +27,9 @@ def parseJMX(jmxFile):
     createJSON()
     validateJMX(jmxFile)
     findJMeterVersion(jmxFile)
+    findThreadGroups(jmxFile)
     return
+
 def cleanup():
     if os.path.exists("./output/output.json"):
         os.remove("./output/output.json")
@@ -53,6 +55,62 @@ def findJMeterVersion(jmxFile):
         outcome="Fail"
         outcome_recommedation = "Consider updating to the latest version of JMeter."       
         writeJSON(outcome,outcome_message,outcome_recommedation)
+    return
+
+def findThreadGroups(jmxFile):
+    '''
+    This function find the number of thread groups.
+    '''
+    with open('./config.yaml','r') as file:
+        try:
+            #Reading Config file
+            elements=yaml.safe_load(file)
+            #Looping JMeter > Thread Group
+            for element in elements['JMeter']['ThreadGroups']:
+                #print((element))
+                findThreadGroupStatus(jmxFile,element)                
+        except yaml.YAMLError as e:
+            print(e)    
+    return
+
+def findThreadGroupStatus(jmxFile,element):
+    '''
+    This function detects Thread Group and types. It will read from the config.yaml for the
+    list of Thread Groups.
+    writeJSON(outcome,outcome_message,outcome_recommedation="None")
+    '''
+    tree = ET.parse(jmxFile)
+    root = tree.getroot()
+    enabledCount = 0
+    flag = 0
+    outcome_message=f"No element found for {element}."
+    for node in root.iter(element):                    
+        if node.attrib:
+            #Find Enabled Thread Groups
+            if str.__contains__(str(node.attrib),'\'enabled\': \'true\''):            
+                #Find enabled count
+                enabledCount += 1
+                #Set flag for success
+                flag=1
+                outcome_message=f"{enabledCount} {element} enabled "
+            elif str.__contains__(str(node.attrib),'\'enabled\': \'false\''):
+                outcome_message=f"No {element} enabled."
+                #Set flag for fail
+                flag=0
+        else:
+            outcome_message=f"No {element} found."
+    if flag == 1:
+        outcome = "Pass"
+        writeJSON(outcome,outcome_message,outcome_recommedation="None")
+        enabledCount = 0                
+    if flag == 0:
+        #printRed(message)
+        outcome_recommedation = f"Consider enabling one or more {element}."
+        outcome = "Fail"
+        writeJSON(outcome,outcome_message,outcome_recommedation)
+        #addRecommendation(recommendation)   
+        enabledCount = 0     
+
     return
 def validateJMX(jmxFile):
     #with open(jmxFile,'r') as f:
